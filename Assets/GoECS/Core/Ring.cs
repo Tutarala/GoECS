@@ -153,7 +153,6 @@ namespace GoECS
 				if (types.All(c.Key.Contains) && types.Length == c.Key.Length) return c.Value;
 			}
 
-			Debug.Log(1111);
 			List<GoEntity> entities = new List<GoEntity>();
 			UnityEngine.Component[] sysParams = new UnityEngine.Component[types.Length];
 			foreach(var entity in GetGoEntities())
