@@ -45,6 +45,7 @@ namespace GoECS
 			index  = i;
 		}
 
+		Dictionary<int, GoEntity> entiMap = new Dictionary<int, GoEntity>();
 		public GoEntity AddGoEntity(GameObject go = null)
 		{
 			var obj = go;
@@ -54,6 +55,7 @@ namespace GoECS
 			}
 
 			var entity = obj.AddComponent<GoEntity>();
+			entiMap.Add(entity.GetID(), entity);
 			this.list.Add(entity);
 
 
@@ -165,27 +167,11 @@ namespace GoECS
 			return entities;
 		}
 
-		Dictionary<Type, List<GoEntity>> collection1 = new Dictionary<Type, List<GoEntity>>();
-		List<GoEntity> GetGoEntities<T>()
-		{
-			return GetGoEntities(typeof(T));
-		}
-
 		List<GoEntity> GetGoEntities(Type type)
 		{
-			if (collection1.ContainsKey(type)) return collection1[type];
-			List<GoEntity> entities = new List<GoEntity>();
-			foreach(var entity in GetGoEntities())
-			{
-
-				if (!entity.gameObject.GetComponent(type)) continue;
-				entities.Add(entity);
-			}
-
-			collection1.Add(type, entities);
-			return entities;
+			var types = new Type[1] { type };
+			return GetGoEntities(types);
 		}
-
 
 		public static bool compareTypes(Type[] arr1, Type[] arr2)
 		{
@@ -198,6 +184,17 @@ namespace GoECS
 		public GoEntity GetGoEntity(GameObject go)
 		{
 			return go.GetComponent<GoEntity>();
+		}
+
+		public GoEntity GetGoEntity(int id)
+		{
+			return entiMap.ContainsKey(id) ? entiMap[id] : null;
+		}
+
+		public GoEntity GetGoEntity<T>() where T : UnityEngine.Component
+		{
+			var list = GetGoEntities(typeof(T));
+			return list.Count > 0 ? list[0] : null;
 		}
 
 		public void AddGoComponent<T>(GameObject go) where T : UnityEngine.Component
@@ -229,52 +226,47 @@ namespace GoECS
 				}
 			}
 			
-			foreach(var c in collection1)
-			{
-				if (c.Key == t && entity.gameObject.GetComponent(t))
-				{
-					c.Value.Add(entity);
-				}
-			}
 		}
 
-		public void RemoveComponentSafe<T>(GoEntity entity) where T : UnityEngine.Component
+		public bool FindAndRemoveComponent<T>(Action<T> func = null) where T : UnityEngine.Component
 		{
 			var t = typeof(T);
-			StartCoroutine(this.RemoveComponent(t, entity));
+			var entities = GetGoEntities(t);
+			if (entities.Count == 0) return false;
+			foreach(var i in entities)
+			{
+				if (func != null)
+				{
+					func(i.GetComponent<T>());	
+				}
+				RemoveComponent<T>(i);
+			}
+			return true;
 		}
 
 		public void RemoveComponent<T>(GoEntity entity) where T : UnityEngine.Component
 		{
 			var t = typeof(T);
-			Destroy(entity.gameObject.GetComponent<T>());
+			DestroyImmediate(entity.gameObject.GetComponent<T>());
 			this.RemoveComponentInC(t, entity);
 		}
-
-		IEnumerator RemoveComponent(Type t, GoEntity entity)
-		{
-			yield return new WaitForEndOfFrame();
-			Destroy(entity.gameObject.GetComponent(t));
-			this.RemoveComponentInC(t, entity);
-		}
-
 
 		void RemoveComponentInC(Type t, GoEntity entity)
 		{
+			Dictionary<Type[], List<GoEntity>> dic = new Dictionary<Type[], List<GoEntity>>();
 			foreach(var c in collection)
 			{
 				if (c.Key.Contains(t))
 				{
-					c.Value.Remove(entity);
+					var n = c.Value.ToList();
+					n.Remove(entity);
+					dic.Add(c.Key, n);
 				}
 			}
-			
-			foreach(var c in collection1)
+
+			foreach(var c in dic)
 			{
-				if (c.Key == t)
-				{
-					c.Value.Remove(entity);
-				}
+				collection[c.Key] = c.Value;
 			}
 		}
 
@@ -295,13 +287,14 @@ namespace GoECS
 				RemoveGoEntityAtList(c.Value, entity);
 			}
 
-			foreach (var c in collection1)
-			{
-				RemoveGoEntityAtList(c.Value, entity);
-			}
-
 			RemoveGoEntityAtList(list, entity);
+			entiMap[entity.GetID()] = null;
 			if (destroy) GameObject.Destroy(entity.gameObject);
+		}
+
+		public void RemoveGoEntity(int id, bool destroy = false)
+		{
+			RemoveGoEntity(GetGoEntity(id), destroy);
 		}
 
 		public GoEntity GetEntity(int id)
@@ -313,15 +306,19 @@ namespace GoECS
 			return null;
 		}	
 
+		[Obsolete]
 		public T GetSingleton<T>()
 		{
-			var entities = GetGoEntities(typeof(T));
+
+			var types = new Type[1] { typeof(T)};
+			var entities = GetGoEntities(types);
 			return entities.Count == 0 ? default(T) : entities[0].GetComponent<T>();
 		}
 
 		public void Execute<T>(Action<T> t)
 		{
-			var entities = GetGoEntities(typeof(T));
+			var types = new Type[1] { typeof(T)};
+			var entities = GetGoEntities(types);
 			foreach(var entity in entities)
 			{
 				t(entity.GetComponent<T>());
@@ -367,7 +364,6 @@ namespace GoECS
 
 			list.Clear();
 			collection.Clear();
-			collection1.Clear();
 		}
 
 		/*

@@ -83,7 +83,7 @@ namespace GoECS.Test
 			{
 				Debug.Log(hit.transform.gameObject.name);
 				Ring.Get.Execute((GoEntity entity, TestHitTag t) => {
-					Ring.Get.RemoveComponentSafe<TestHitTag>(entity);
+					Ring.Get.RemoveComponent<TestHitTag>(entity);
 				});
 				Ring.Get.AddGoComponent<TestHitTag>(hit.transform.gameObject);
 			}

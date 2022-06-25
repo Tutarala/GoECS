@@ -25,20 +25,23 @@ namespace GoECS
 			return _world.gameObject.GetComponent<T>();
 		}
 
-		List<Ring> rings = new List<Ring>();
+		public readonly int ringMax = 10;
+		Ring[] rings = new Ring[10];
 		void Awake()
 		{
 			// Create Ring0	
-			AddRing();
+			AddRing(0);
 		}
 
 		public Ring Ring(int index = 0)
 		{
-			return index < _world.rings.Count ? _world.rings[index] : null;
+			if (index > 0 && index <= ringMax) return _world.rings[index];
+			else return Ring0();
 		}
 
 		public Ring Ring0()
 		{
+			if (_world.rings[0] == null) AddRing(0);
 			return _world.rings[0];
 		}
 
@@ -69,14 +72,18 @@ namespace GoECS
 			t(this.GetComponent<T1>(), this.GetComponent<T2>(), this.GetComponent<T3>());
 		}
 		
-		int ringIndex = 0;
-		public void AddRing()
+		public void AddRing(int index)
+		{
+			if (index > ringMax) return;
+			rings[index] = CreateRing(index);
+		}
+
+		public Ring CreateRing(int ringIndex)
 		{
 			var obj = new GameObject($"GoECS Ring{ringIndex}");
 			var com = obj.AddComponent<Ring>();
 			com.SetIndex(ringIndex);
-			rings.Add(com);
-			ringIndex++;
+			return com;
 		}
 
 		public void RemoveRing(int index)
