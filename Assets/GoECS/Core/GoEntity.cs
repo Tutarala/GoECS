@@ -12,7 +12,6 @@ namespace GoECS
 		void OnDestroy()
 		{
 			Debug.LogWarning($"{this.gameObject.name} Destroy !!! Dont Destroy GoEntity Without Using Ring Method [RemoveGoEntity].");
-			World.Get.Ring(ring).RemoveGoEntity(this);
 		}
 
 		int ring = 0;
