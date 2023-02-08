@@ -6,7 +6,7 @@ namespace GoECS
 	{
 		void Awake()
 		{
-			Ring.Instance().AddGoEntity(this.gameObject);
+			Ring.Get.AddGoEntity(this.gameObject);
 		}
 	}
 }

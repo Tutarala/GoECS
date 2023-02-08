@@ -1,13 +1,49 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEditor;
 using System.Linq;
 
 namespace GoECS
 {
+#if UNITY_EDITOR
+	public class DisplayOnly : PropertyAttribute
+	{
+
+	}
+
+	[CustomPropertyDrawer(typeof(DisplayOnly))]
+	public class ReadOnlyDrawer : PropertyDrawer
+	{
+		public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+		{
+			return EditorGUI.GetPropertyHeight(property, label, true);
+		}
+
+		public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+		{
+			GUI.enabled = false;
+			EditorGUI.PropertyField(position, property, label, true);
+			GUI.enabled = true;
+		}
+	}
+#endif
+
+	public interface IGoEntityID
+	{
+		int CreateID();
+	}
+
     public class GoEntity : MonoBehaviour, IEntity
 	{
-		public int GetID() { return  this.gameObject.GetInstanceID(); }
+#if UNITY_EDITOR
+		[DisplayOnly]
+#endif
+		[SerializeField]
+		int id;
+		public int GetID() { return id; }
+		// public void SetID(int id) { this.id = id; }
+		//
 		
 		void OnDestroy()
 		{
@@ -16,11 +52,13 @@ namespace GoECS
 
 		int ring = 0;
 		bool isInit = false;
-		public void Init(int ringIndex)
+		public void Init(int ringIndex, int id)
 		{
 			if (isInit) return;
 			ring = ringIndex;
 			isInit = true;
+
+			this.id = id;
 		}
 
 		public Component RmComponent(Type t)

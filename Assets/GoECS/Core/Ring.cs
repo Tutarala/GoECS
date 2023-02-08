@@ -30,6 +30,8 @@ namespace GoECS
 
 		List<ISystemOnUpdate> updateSystems = new List<ISystemOnUpdate>();
 
+		public IGoEntityID delegateID = null;
+
 		void Update()
 		{
 			foreach (var sys in updateSystems)
@@ -53,8 +55,20 @@ namespace GoECS
 			{
 				obj = new GameObject();
 			}
+			return AddGoEntity(obj, obj.GetInstanceID());
+		}
 
+		public GoEntity AddGoEntity(GameObject go, int id)
+		{
+			var obj = go;
 			var entity = obj.AddComponent<GoEntity>();
+			entity.Init(index, id);
+			if (entiMap.ContainsKey(id)) 
+			{
+				Debug.LogWarning($"EntityID Already Exist : {go.name} ==> {id}");
+				Destroy(obj);
+				return null;
+			}
 			entiMap.Add(entity.GetID(), entity);
 			this.list.Add(entity);
 
@@ -197,6 +211,11 @@ namespace GoECS
 			return list.Count > 0 ? list[0] : null;
 		}
 
+		public GoEntity[] GetGoEntityList<T>() where T : UnityEngine.Component
+		{
+			return GetGoEntities(typeof(T)).ToArray();
+		}
+
 		public void AddGoComponent<T>(GameObject go) where T : UnityEngine.Component
 		{
 			var entity = GetGoEntity(go);
@@ -288,7 +307,7 @@ namespace GoECS
 			}
 
 			RemoveGoEntityAtList(list, entity);
-			entiMap[entity.GetID()] = null;
+			entiMap.Remove(entity.GetID());
 			if (destroy) GameObject.Destroy(entity.gameObject);
 		}
 

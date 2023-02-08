@@ -22,6 +22,7 @@ namespace GoECS
 
 		public static T Com<T>()
 		{
+            if (_world == null || _world.gameObject == null) return default(T);
 			return _world.gameObject.GetComponent<T>();
 		}
 
