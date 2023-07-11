@@ -211,6 +211,18 @@ namespace GoECS
 			return list.Count > 0 ? list[0] : null;
 		}
 
+
+		public T GetGoEntityCom<T>() where T : UnityEngine.Component
+		{
+			var list = GetGoEntities(typeof(T));
+			var entity = list.Count > 0 ? list[0] : null;
+			if (entity == null) return null;
+
+			T com = null;
+			entity.gameObject.TryGetComponent(out com);
+			return com;
+		}
+
 		public GoEntity[] GetGoEntityList<T>() where T : UnityEngine.Component
 		{
 			return GetGoEntities(typeof(T)).ToArray();
